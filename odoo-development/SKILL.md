@@ -58,3 +58,6 @@ When developing or interacting with Odoo on this computer, always follow these r
 
 8. **Module Dependencies:**
    - Al definir las dependencias de los módulos, debes poner solo dependencias finales. Por ejemplo, si tienes `helpdesk`, `stock` y `helpdesk_stock`, solo debes poner `helpdesk_stock` y omitir los demás.
+
+9. **Base User Role and Demo Data:**
+   - Si se pide agregar un rol del módulo `base_user_role`, propón siempre crear un usuario en data demo con el rol definido y asignado, para que sirva para verificar el funcionamiento del rol. El nombre de usuario y contraseña deben coincidir (ej. `login='salesman'`, `password='salesman'`).
