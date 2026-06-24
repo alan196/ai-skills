@@ -61,8 +61,12 @@ When developing or interacting with Odoo on this computer, always follow these r
 
 9. **Base User Role and Demo Data:**
    - Si se pide agregar un rol del módulo `base_user_role`, propón siempre crear un usuario en data demo con el rol definido y asignado, para que sirva para verificar el funcionamiento del rol. El nombre de usuario y contraseña deben coincidir (ej. `login='salesman'`, `password='salesman'`).
+   - El registro `res.users` generado en data demo DEBE incluir el atributo `context="{'no_reset_password': True}"` para evitar errores del linter (`xml-create-user-wo-reset-password`).
    - Al usar roles en vistas XML con el atributo `groups="..."`, recuerda que `res.users.role` usa delegación (`_inherits`) hacia `res.groups`. Por lo tanto, el external ID del grupo generado automáticamente es `<xml_id_del_rol>_res_groups`. Si el rol es `mafensa_security.role_inventory_user`, en la vista debes usar `groups="mafensa_security.role_inventory_user_res_groups"`.
 
 10. **Merge Requests and Task IDs:**
     - Antes de generar o sugerir la creación de un Merge Request, PREGUNTA siempre en qué tarea se está trabajando.
     - El título del Merge Request DEBE incluir el prefijo `task#<ID>` (por ejemplo, `task#31865`). Esto es vital porque existe un módulo que monitorea los títulos para mapear los MRs con tareas específicas en Odoo.
+
+11. **Branch Naming:**
+    - Los nombres de las ramas (branches) DEBEN ser hostnames válidos (RFC 1123). Solo pueden incluir caracteres alfanuméricos, guiones (`-`), puntos (`.`) y guiones bajos (`_`). Nunca uses caracteres especiales como `#`. Por ejemplo, usa `19.0-task-31865` en lugar de `19.0-task#31865`.
