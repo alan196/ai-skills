@@ -52,3 +52,9 @@ When developing or interacting with Odoo on this computer, always follow these r
       `... -d <test_db> -i <module> --test-enable --test-tags /<module> --stop-after-init`
    3. When development is finished, ASK whether to drop the test DB and its filestore (`dropdb <test_db>` and `rm -rf <data_dir>/filestore/<test_db>`) to avoid accumulating databases.
    - NEVER install/test against production databases (e.g. `mtnmx170`).
+
+7. **Security and Group Permissions:**
+   - Si te pido restringir un permiso a una vista o botón, siempre busca la opción de asignar permiso a un grupo de seguridad, pregunta si es necesario crear un grupo de seguridad específico o agregarlo a un grupo existente, en vez de restringir a uno, evita usar `!group.security_group` a menos que sea estrictamente necesario por el requerimiento.
+
+8. **Module Dependencies:**
+   - Al definir las dependencias de los módulos, debes poner solo dependencias finales. Por ejemplo, si tienes `helpdesk`, `stock` y `helpdesk_stock`, solo debes poner `helpdesk_stock` y omitir los demás.
