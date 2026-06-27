@@ -67,6 +67,7 @@ When developing or interacting with Odoo on this computer, always follow these r
 10. **Merge Requests and Task IDs:**
     - Antes de generar o sugerir la creación de un Merge Request, PREGUNTA siempre en qué tarea se está trabajando.
     - El título del Merge Request DEBE incluir el prefijo `task#<ID>` (por ejemplo, `task#31865`). Esto es vital porque existe un módulo que monitorea los títulos para mapear los MRs con tareas específicas en Odoo.
+    - **Idioma de PRs/MRs:** NUNCA escribas comentarios, descripciones ni títulos de Pull Requests / Merge Requests en español. Siempre en inglés, sin importar el repo (OCA, Jarsa, etc.). Esto aplica a comentarios de revisión, cuerpos de PR y mensajes de commit. (La regla de responder en español de México es solo para la conversación con el usuario, no para artefactos de Git/GitHub.)
 
 11. **Branch Naming:**
     - Los nombres de las ramas (branches) DEBEN ser hostnames válidos (RFC 1123). Solo pueden incluir caracteres alfanuméricos, guiones (`-`), puntos (`.`) y guiones bajos (`_`). Nunca uses caracteres especiales como `#`. Por ejemplo, usa `19.0-task-31865` en lugar de `19.0-task#31865`.
