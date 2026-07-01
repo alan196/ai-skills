@@ -71,3 +71,6 @@ When developing or interacting with Odoo on this computer, always follow these r
 
 11. **Branch Naming:**
     - Los nombres de las ramas (branches) DEBEN ser hostnames válidos (RFC 1123). Solo pueden incluir caracteres alfanuméricos, guiones (`-`), puntos (`.`) y guiones bajos (`_`). Nunca uses caracteres especiales como `#`. Por ejemplo, usa `19.0-task-31865` en lugar de `19.0-task#31865`.
+
+12. **Repository Naming:**
+    - Los nombres de los REPOSITORIOS (git.jarsa.com, GitHub, etc.) NUNCA usan guion bajo (`_`); SIEMPRE usan guion (`-`), siguiendo la convención OCA (ej. `quality-control-webcam`, `stock-logistics-warehouse`). Esto contrasta con los MÓDULOS de Odoo, cuyo nombre de carpeta y `MAIN_APP` SÍ usan guion bajo porque son paquetes de Python (ej. módulo `quality_control_webcam` dentro del repo `quality-control-webcam`). La misma regla de guiones aplica al nombre de la imagen de contenedor en `DOCKER_IMAGE_REPO`.
