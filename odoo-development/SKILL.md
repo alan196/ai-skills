@@ -55,6 +55,9 @@ When developing or interacting with Odoo on this computer, always follow these r
 
 7. **Security and Group Permissions:**
    - Si te pido restringir un permiso a una vista o botón, siempre busca la opción de asignar permiso a un grupo de seguridad, pregunta si es necesario crear un grupo de seguridad específico o agregarlo a un grupo existente, en vez de restringir a uno, evita usar `!group.security_group` a menos que sea estrictamente necesario por el requerimiento.
+   - **ACLs siempre en `ir.model.access.csv`, nunca como records XML** (`<record model="ir.model.access">`), para tener todos los accesos del módulo centralizados en un solo archivo.
+   - Si una línea del CSV referencia un grupo que se crea en un archivo de datos posterior (ej. el grupo delegado `<rol>_res_groups` de `base_user_role`), la solución preferida es mover `security/ir.model.access.csv` DESPUÉS de ese archivo en la lista `data` del manifest, en vez de pasar los ACLs a XML.
+   - Solo si por alguna razón fuera obligatorio definir un ACL como record XML, justifica el motivo y PREGUNTA antes de hacerlo.
 
 8. **Module Dependencies:**
    - Al definir las dependencias de los módulos, debes poner solo dependencias finales. Por ejemplo, si tienes `helpdesk`, `stock` y `helpdesk_stock`, solo debes poner `helpdesk_stock` y omitir los demás.
