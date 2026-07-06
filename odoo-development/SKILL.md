@@ -27,6 +27,7 @@ When developing or interacting with Odoo on this computer, always follow these r
    - **IF `variables.sh` EXISTS:** Run `pre-commit-vauxoo` exactly as is, without any subcommands and **without** a dot at the end. DO NOT run standard `pre-commit run`. This can be run from the repo root (`cd <repo> && pre-commit-vauxoo`) or a specific module (`cd <repo>/<module> && pre-commit-vauxoo`).
    - **IF `variables.sh` DOES NOT EXIST:** When creating or modifying an Odoo module, you MUST execute `pre-commit run --all-files`.
    - Never use the sub-command `run`, the `-p` flag, or a dot `.` with `pre-commit-vauxoo`.
+   - **Inline linter silencing** (`# pylint: disable=...`, `# noqa`, etc.): only allowed when an Odoo-standard pattern forces it (e.g. the `SELF_READABLE_FIELDS` / `SELF_WRITEABLE_FIELDS` property overrides on `res.users` trip `invalid-name`). In every other case fix the code instead of silencing the check. Never disable a check repo-wide (`PYLINT_DISABLE_CHECKS` in `variables.sh`, editing `.pylintrc`) to avoid an inline comment: the scoped inline disable is preferable to losing the check everywhere. In pre-commit-vauxoo repos the generated `.pylintrc` is overwritten on every run — never edit it.
 
 4. **Code and Module Generation Standards:**
    - Always ensure that your code complies with OCA development standards.
