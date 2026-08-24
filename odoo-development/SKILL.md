@@ -75,6 +75,14 @@ When developing or interacting with Odoo on this computer, always follow these r
 
 11. **Branch Naming:**
     - Los nombres de las ramas (branches) DEBEN ser hostnames válidos (RFC 1123). Solo pueden incluir caracteres alfanuméricos, guiones (`-`), puntos (`.`) y guiones bajos (`_`). Nunca uses caracteres especiales como `#`. Por ejemplo, usa `19.0-task-31865` en lugar de `19.0-task#31865`.
+    - **REGLA INVIOLABLE — Remotos Jarsa vs Jarsa-dev:** NUNCA, bajo ninguna circunstancia, crear o pushear branches de trabajo a los remotos `Jarsa` (git.vauxoo.com:Jarsa/*, github.com:Jarsa/*). En los remotos Jarsa SOLO deben existir los branches estables por versión de Odoo (ej. `17.0` en mtnmx). TODO branch de trabajo (features, fixes, tareas) va SIEMPRE al remoto `jarsa-dev` (Jarsa-dev/*), y los pipelines de CI (incluido `odoo_sh_deploy`) se disparan en el proyecto de Jarsa-dev (ej. `glab ci run -b <branch> -R git.vauxoo.com/Jarsa-dev/<repo>`). Si un branch de trabajo llega por error a un remoto Jarsa, borrarlo de inmediato (`git push jarsa --delete <branch>`).
 
 12. **Repository Naming:**
     - Los nombres de los REPOSITORIOS (git.jarsa.com, GitHub, etc.) NUNCA usan guion bajo (`_`); SIEMPRE usan guion (`-`), siguiendo la convención OCA (ej. `quality-control-webcam`, `stock-logistics-warehouse`). Esto contrasta con los MÓDULOS de Odoo, cuyo nombre de carpeta y `MAIN_APP` SÍ usan guion bajo porque son paquetes de Python (ej. módulo `quality_control_webcam` dentro del repo `quality-control-webcam`). La misma regla de guiones aplica al nombre de la imagen de contenedor en `DOCKER_IMAGE_REPO`.
+
+13. **Module Migration Between Odoo Versions:**
+    - Toda migración de un módulo de Odoo de una versión a otra (ej. 16.0→19.0, 18.0→19.0) DEBE hacerse con `oca-port`, sin importar si el módulo es de OCA o privado.
+    - **La herramienta instalada en esta máquina es el fork `oca-port-jarsa`** (pipx, paquete `oca-port-jarsa`), que expone los binarios `oca-port` y `oca-port-jarsa`. Tiene la misma funcionalidad que el oca-port original PERO además es compatible con repositorios de GitLab (git.jarsa.com). NUNCA instales el `oca-port` original de PyPI: con repos de GitLab falla. Si el binario no está disponible, instala el fork con `pipx install oca-port-jarsa`, jamás `pipx install oca-port`.
+    - Patrón: `oca-port <remote>/<origen> <remote>/<destino> <modulo> --fetch [--no-cache]` desde la raíz del repo. Para repos privados en git.jarsa.com (GitLab) usar `--platform gitlab` y/o `--upstream-org` según aplique.
+    - NUNCA migrar copiando carpetas a mano ni con `git format-patch` manual: oca-port preserva el historial de commits y sigue el flujo OCA (branch `XX.0-mig-<modulo>`, commit `[MIG]`).
+    - Después de oca-port, adaptar el código a la versión destino, correr pre-commit (regla 3) y validar con tests (regla 6).
