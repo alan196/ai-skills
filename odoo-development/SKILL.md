@@ -60,27 +60,100 @@ When developing or interacting with Odoo on this computer, always follow these r
    - Si una línea del CSV referencia un grupo que se crea en un archivo de datos posterior (ej. el grupo delegado `<rol>_res_groups` de `base_user_role`), la solución preferida es mover `security/ir.model.access.csv` DESPUÉS de ese archivo en la lista `data` del manifest, en vez de pasar los ACLs a XML.
    - Solo si por alguna razón fuera obligatorio definir un ACL como record XML, justifica el motivo y PREGUNTA antes de hacerlo.
 
-8. **Module Dependencies:**
+8. **OCA Guidelines — REGLA INQUEBRANTABLE:**
+   - **Todo módulo, nuevo o modificado, cumple las OCA Guidelines**
+     (https://github.com/OCA/odoo-community.org/blob/master/website/Contribution/CONTRIBUTING.rst).
+     Aplica también en repos privados de cliente: pre-commit-vauxoo no valida la
+     mayoría de estos puntos, así que se revisan a mano antes de commitear.
+   - **Nombre del módulo:** singular; prefijo `base_` si sirve de base para otros;
+     `l10n_CC_` para localizaciones; al extender un módulo de Odoo, el nombre de
+     ese módulo va primero (`mail_forward`, `crm_partner_firstname`).
+   - **Estructura de directorios:** `controllers/ data/ demo/ i18n/ migrations/
+     models/ readme/ reports/ security/ static/ templates/ tests/ views/ wizards/`.
+     En plural `reports/`, nunca `report/`. `README.rst` se GENERA desde `readme/`:
+     jamás se escribe a mano, y no debe existir un `README.md` al lado.
+   - **Nombres de archivo:** un archivo por modelo, `models/<modelo>.py`,
+     `views/<modelo>_views.xml`, `data/<modelo>_data.xml`,
+     `demo/<modelo>_demo.xml`, `security/<modelo>_security.xml`. Solo `[a-z0-9_]`.
+   - **xml_id:**
+     - vista: `<modelo>_view_<tipo>` (`form`, `list`, `search`, `kanban`, ...)
+     - acción: `<modelo>_action`, y `<modelo>_action_<detalle>` si hay varias
+     - menú: `<modelo>_menu`
+     - grupo: `<modelo>_group_<nombre>`
+     - regla: `<modelo>_rule_<grupo>`
+     - dato: `<modelo>_<nombre>`; los de demo llevan sufijo `_demo`
+     - nunca prefijar con el módulo actual, y al heredar se conserva el nombre
+       del xml_id original si el original no sigue la convención
+   - **XML:** cuatro espacios; `id` antes de `model`; en los campos, `name`
+     primero; `<odoo>` para datos actualizables y `<odoo noupdate="1">` para los
+     que no, `<data>` solo para mezclar; nada de `string=` en `<list>`; evitar
+     `position="replace"` (si es imprescindible, comentar el motivo y subir la
+     `priority` por encima de 100).
+   - **Python:** orden de atributos en el modelo — privados, campos, constraints
+     SQL, defaults, computes en el mismo orden que los campos, constrains y
+     onchanges, CRUD, acciones y al final el resto. Métodos `_compute_<campo>`,
+     `_inverse_<campo>`, `_search_<campo>`, `_default_<campo>`,
+     `_onchange_<campo>`, `_check_<constraint>`, `action_<accion>`. Constantes en
+     MAYÚSCULAS. Nunca `cr.commit()` ni SQL crudo si el ORM puede hacerlo.
+   - **Campos:** sufijo `_id` en Many2one y `_ids` en One2many/Many2many; omitir
+     `string=` cuando coincide con el nombre técnico; defaults con
+     `lambda self: self._default_x()` para que se puedan heredar.
+   - **CSS/SCSS:** toda clase se prefija `o_<nombre_tecnico_del_modulo>`.
+   - **Manifest:** sin claves vacías, con `license`, `summary` y `category`;
+     versión `<serie>.x.y.z` — `x` cambia el modelo de datos, `y` agrega
+     funcionalidad, `z` corrige. **Subir la versión en CADA cambio funcional:**
+     Odoo.sh y muchos despliegues solo actualizan un módulo cuando cambia su
+     versión, así que sin ese bump el código llega al disco y la base se queda
+     con el esquema viejo.
+   - **Excepción documentada:** no renombrar el xml_id de un `res.groups` ya
+     desplegado. Odoo borra el registro viejo al actualizar y los usuarios
+     pierden ese grupo. Si el nombre no cumple, se deja y se anota el motivo.
+
+9. **Module Dependencies:**
    - Al definir las dependencias de los módulos, debes poner solo dependencias finales. Por ejemplo, si tienes `helpdesk`, `stock` y `helpdesk_stock`, solo debes poner `helpdesk_stock` y omitir los demás.
 
-9. **Base User Role and Demo Data:**
+10. **Base User Role and Demo Data:**
+   - **REGLA INQUEBRANTABLE — el usuario `admin` NUNCA debe tener asignado un rol.** Nunca crees un `res.users.role.line` para `base.user_admin`, ni escribas `user_ids` sobre un registro `res.users.role`. Motivo: `base_user_role.set_groups_from_roles()` REEMPLAZA los grupos de todo usuario que tenga al menos una línea de rol, dejándole únicamente los grupos implicados por sus roles. Si el admin recibe un rol, pierde de golpe `stock.group_stock_manager`, `account.group_account_manager`, `purchase.group_purchase_manager`, `sales_team.group_sale_manager` y cualquier otro grupo que tuviera fuera del rol. Los usuarios sin líneas de rol quedan intactos (`if not user.role_line_ids and not force: continue`).
+   - **Cómo restringir una vista o un botón cuando el admin también debe verlo.** NUNCA uses el grupo delegado del rol (`<rol>_res_groups`) para la restricción. Crea un grupo de seguridad propio, asígnale el admin AL CREARLO, y después haz que el rol implique ese grupo:
+
+     ```xml
+     <!-- security/<modulo>_groups.xml -->
+     <record id="group_stock_transfer_validation" model="res.groups">
+         <field name="name">Validate Transfers</field>
+         <field name="user_ids" eval="[(4, ref('base.user_admin'))]" />
+     </record>
+     ```
+
+     ```xml
+     <!-- data/res_users_role_data.xml -->
+     <record id="role_inventory_user" model="res.users.role">
+         <field name="name">Role: Inventory User</field>
+         <field
+             name="implied_ids"
+             eval="[(4, ref('stock.group_stock_user')), (4, ref('<modulo>.group_stock_transfer_validation'))]"
+         />
+     </record>
+     ```
+
+     Y en la vista: `groups="<modulo>.group_stock_transfer_validation"`. El archivo de grupos DEBE ir antes que el de roles en la lista `data` del manifest. Así el admin tiene el grupo de forma directa (sin rol, por lo que `base_user_role` no lo toca) y los usuarios del rol lo reciben por implicación.
+   - **NO intentes asignar el grupo desde el usuario** con `<record id="base.user_admin" model="res.users">`: la data de `base.user_admin` vive en `odoo/addons/base/data/res_users_data.xml` dentro de un `<data noupdate="1">`, así que Odoo SALTA la actualización en silencio, sin error, y el grupo nunca se asigna. Ese `noupdate` es correcto y no debe tocarse: el registro define `password`, `company_id` y `group_ids eval="[Command.set([])]"`, de modo que sin él cada `-u base` restablecería la contraseña del admin y le borraría todos los grupos.
    - Si se pide agregar un rol del módulo `base_user_role`, propón siempre crear un usuario en data demo con el rol definido y asignado, para que sirva para verificar el funcionamiento del rol. El nombre de usuario y contraseña deben coincidir (ej. `login='salesman'`, `password='salesman'`).
    - El registro `res.users` generado en data demo DEBE incluir el atributo `context="{'no_reset_password': True}"` para evitar errores del linter (`xml-create-user-wo-reset-password`).
    - Al usar roles en vistas XML con el atributo `groups="..."`, recuerda que `res.users.role` usa delegación (`_inherits`) hacia `res.groups`. Por lo tanto, el external ID del grupo generado automáticamente es `<xml_id_del_rol>_res_groups`. Si el rol es `mafensa_security.role_inventory_user`, en la vista debes usar `groups="mafensa_security.role_inventory_user_res_groups"`.
 
-10. **Merge Requests and Task IDs:**
+11. **Merge Requests and Task IDs:**
     - Antes de generar o sugerir la creación de un Merge Request, PREGUNTA siempre en qué tarea se está trabajando.
     - El título del Merge Request DEBE incluir el prefijo `task#<ID>` (por ejemplo, `task#31865`). Esto es vital porque existe un módulo que monitorea los títulos para mapear los MRs con tareas específicas en Odoo.
     - **Idioma de PRs/MRs:** NUNCA escribas comentarios, descripciones ni títulos de Pull Requests / Merge Requests en español. Siempre en inglés, sin importar el repo (OCA, Jarsa, etc.). Esto aplica a comentarios de revisión, cuerpos de PR y mensajes de commit. (La regla de responder en español de México es solo para la conversación con el usuario, no para artefactos de Git/GitHub.)
 
-11. **Branch Naming:**
+12. **Branch Naming:**
     - Los nombres de las ramas (branches) DEBEN ser hostnames válidos (RFC 1123). Solo pueden incluir caracteres alfanuméricos, guiones (`-`), puntos (`.`) y guiones bajos (`_`). Nunca uses caracteres especiales como `#`. Por ejemplo, usa `19.0-task-31865` en lugar de `19.0-task#31865`.
     - **REGLA INVIOLABLE — Remotos Jarsa vs Jarsa-dev:** NUNCA, bajo ninguna circunstancia, crear o pushear branches de trabajo a los remotos `Jarsa` (git.vauxoo.com:Jarsa/*, github.com:Jarsa/*). En los remotos Jarsa SOLO deben existir los branches estables por versión de Odoo (ej. `17.0` en mtnmx). TODO branch de trabajo (features, fixes, tareas) va SIEMPRE al remoto `jarsa-dev` (Jarsa-dev/*), y los pipelines de CI (incluido `odoo_sh_deploy`) se disparan en el proyecto de Jarsa-dev (ej. `glab ci run -b <branch> -R git.vauxoo.com/Jarsa-dev/<repo>`). Si un branch de trabajo llega por error a un remoto Jarsa, borrarlo de inmediato (`git push jarsa --delete <branch>`).
 
-12. **Repository Naming:**
+13. **Repository Naming:**
     - Los nombres de los REPOSITORIOS (git.jarsa.com, GitHub, etc.) NUNCA usan guion bajo (`_`); SIEMPRE usan guion (`-`), siguiendo la convención OCA (ej. `quality-control-webcam`, `stock-logistics-warehouse`). Esto contrasta con los MÓDULOS de Odoo, cuyo nombre de carpeta y `MAIN_APP` SÍ usan guion bajo porque son paquetes de Python (ej. módulo `quality_control_webcam` dentro del repo `quality-control-webcam`). La misma regla de guiones aplica al nombre de la imagen de contenedor en `DOCKER_IMAGE_REPO`.
 
-13. **Module Migration Between Odoo Versions:**
+14. **Module Migration Between Odoo Versions:**
     - Toda migración de un módulo de Odoo de una versión a otra (ej. 16.0→19.0, 18.0→19.0) DEBE hacerse con `oca-port`, sin importar si el módulo es de OCA o privado.
     - **La herramienta instalada en esta máquina es el fork `oca-port-jarsa`** (pipx, paquete `oca-port-jarsa`), que expone los binarios `oca-port` y `oca-port-jarsa`. Tiene la misma funcionalidad que el oca-port original PERO además es compatible con repositorios de GitLab (git.jarsa.com). NUNCA instales el `oca-port` original de PyPI: con repos de GitLab falla. Si el binario no está disponible, instala el fork con `pipx install oca-port-jarsa`, jamás `pipx install oca-port`.
     - Patrón: `oca-port <remote>/<origen> <remote>/<destino> <modulo> --fetch [--no-cache]` desde la raíz del repo. Para repos privados en git.jarsa.com (GitLab) usar `--platform gitlab` y/o `--upstream-org` según aplique.
