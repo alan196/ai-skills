@@ -144,6 +144,7 @@ When developing or interacting with Odoo on this computer, always follow these r
 11. **Merge Requests and Task IDs:**
     - Antes de generar o sugerir la creación de un Merge Request, PREGUNTA siempre en qué tarea se está trabajando.
     - El título del Merge Request DEBE incluir el prefijo `task#<ID>` (por ejemplo, `task#31865`). Esto es vital porque existe un módulo que monitorea los títulos para mapear los MRs con tareas específicas en Odoo.
+    - **Ligas a PR/MR:** en descripciones y comentarios de GitLab (git.jarsa.com), en el chatter de Odoo y en los mensajes al usuario, las referencias a PR de GitHub van SIEMPRE con URL completa (`https://github.com/OCA/account-payment/pull/976`). La forma corta `OCA/account-payment#976` GitLab la convierte en liga a git.jarsa.com.
     - **Idioma de PRs/MRs:** NUNCA escribas comentarios, descripciones ni títulos de Pull Requests / Merge Requests en español. Siempre en inglés, sin importar el repo (OCA, Jarsa, etc.). Esto aplica a comentarios de revisión, cuerpos de PR y mensajes de commit. (La regla de responder en español de México es solo para la conversación con el usuario, no para artefactos de Git/GitHub.)
 
 12. **Branch Naming:**
@@ -159,3 +160,19 @@ When developing or interacting with Odoo on this computer, always follow these r
     - Patrón: `oca-port <remote>/<origen> <remote>/<destino> <modulo> --fetch [--no-cache]` desde la raíz del repo. Para repos privados en git.jarsa.com (GitLab) usar `--platform gitlab` y/o `--upstream-org` según aplique.
     - NUNCA migrar copiando carpetas a mano ni con `git format-patch` manual: oca-port preserva el historial de commits y sigue el flujo OCA (branch `XX.0-mig-<modulo>`, commit `[MIG]`).
     - Después de oca-port, adaptar el código a la versión destino, correr pre-commit (regla 3) y validar con tests (regla 6).
+
+15. **Sincronización de forks Jarsa con OCA — REGLA GRAVE (riesgo de perder cambios):**
+    - Un fork `Jarsa/<repo>` en su rama `<version>` debe verse SIEMPRE como la historia de OCA tal cual y, encima, los commits propios de Jarsa, lineales y sin merge commits.
+    - NUNCA `git merge oca/<version>` sobre la rama de Jarsa: deja los cambios de OCA DESPUÉS de los de Jarsa y llena la historia de merges, y con el tiempo ya no se sabe dónde quedó cada cambio. NUNCA resetear la rama de Jarsa a OCA a secas: se pierden los commits de Jarsa.
+    - Procedimiento único cuando pidan "sincroniza <repo> con OCA":
+      1. `git fetch oca <v> && git fetch jarsa <v>`
+      2. `old=$(git rev-parse jarsa/<v>); base=$(git merge-base $old oca/<v>)`
+      3. `git checkout -b <v>-jarsa-on-oca $old && git rebase --onto oca/<v> $base` (los merge commits viejos se descartan, los commits reales se replayan).
+      4. VERIFICAR que no se perdió nada: `files=$(git diff --name-only $base $old)` y `git diff --stat $old HEAD -- $files` debe quedar VACÍO (mismo contenido en todo lo que tocó Jarsa). Si no queda vacío, revisar a mano antes de seguir.
+      5. Push a `Jarsa-dev` y PR a `Jarsa/<repo>` rama `<v>`, a mezclar con "Rebase and merge". Nunca push directo a `Jarsa/*` (regla 12).
+    - Lo mismo para ramas de PR que haya que actualizar: rebase y `push -f`, nunca merge commits.
+    - PR a OCA y a Jarsa del mismo módulo: si difieren (por ejemplo `test-requirements.txt` con dependencias no publicadas, que va SOLO en el PR a OCA), usar ramas separadas; la de Jarsa rebaseada sobre `jarsa/<v>`.
+
+16. **`oca_dependencies.txt` de los repos de cliente:**
+    - Apunta SIEMPRE a los repos principales (`git@github.com:Jarsa/<repo>.git`, rama por defecto de la versión). Nunca a `Jarsa-dev` ni a una rama de trabajo, aunque el CI del cliente quede en rojo mientras se mezcla el PR al fork. El orden es: PR a OCA + PR al fork de Jarsa, se mezcla en el fork, y el CI del cliente se pone verde solo.
+    - El CI de Jarsa (`jarsa_sync_deps`) cachea cada dependencia por nombre en un directorio persistente y solo hace `fetch` del remoto original: cambiar la URL de un repo ya cacheado falla con "couldn't find remote ref". Otra razón para no tocar las URLs.
