@@ -27,6 +27,13 @@ When developing or interacting with Odoo on this computer, always follow these r
    - **IF `variables.sh` EXISTS:** Run `pre-commit-vauxoo` exactly as is, without any subcommands and **without** a dot at the end. DO NOT run standard `pre-commit run`. This can be run from the repo root (`cd <repo> && pre-commit-vauxoo`) or a specific module (`cd <repo>/<module> && pre-commit-vauxoo`).
    - **IF `variables.sh` DOES NOT EXIST:** When creating or modifying an Odoo module, you MUST execute `pre-commit run --all-files`.
    - Never use the sub-command `run`, the `-p` flag, or a dot `.` with `pre-commit-vauxoo`.
+   - **REGLA INQUEBRANTABLE — ningún push ni MR/PR sale con pre-commit en rojo.** El pre-commit que cuenta es el que corre DESPUÉS del último cambio, sobre lo que realmente se va a pushear; uno corrido antes de la última edición no vale. Compuerta obligatoria antes de cada `git push` y antes de crear/actualizar un MR/PR:
+     1. Correr pre-commit desde la RAÍZ del repo (el CI corre ahí; desde una subcarpeta puede dar otro resultado).
+     2. NO confiar en el exit code: en local `pre-commit-vauxoo` termina en 0 aunque el autofix haya reformateado, y en el CI ese mismo caso es `exit 1`. Leer el resumen: `Autofix checks`, `Mandatory checks` y `Optional checks` deben decir `Passed`. `Reformatted` cuenta como FALLA.
+     3. Si reformateó archivos, agregarlos al commit (amend/fixup del commit que los tocó) y VOLVER a correr hasta que todo salga `Passed` y `git status` quede limpio. Solo entonces push.
+     4. Si el CI reporta algo que en local no sale, comparar versiones: el log del CI imprime `pre-commit-vauxoo==X.Y.Z`; igualarla con `pipx upgrade pre-commit-vauxoo` (o `pipx install --force pre-commit-vauxoo==X.Y.Z`) y repetir.
+     5. Nunca escribir "pre-commit green" en la descripción de un MR/PR ni en un reporte sin haber hecho los pasos 1-3 sobre el HEAD que se pusheó.
+     6. Después del push, revisar el job `precommit` del pipeline del MR; si falla, corregirlo antes de dar el trabajo por terminado.
    - **Inline linter silencing** (`# pylint: disable=...`, `# noqa`, etc.): only allowed when an Odoo-standard pattern forces it (e.g. the `SELF_READABLE_FIELDS` / `SELF_WRITEABLE_FIELDS` property overrides on `res.users` trip `invalid-name`). In every other case fix the code instead of silencing the check. Never disable a check repo-wide (`PYLINT_DISABLE_CHECKS` in `variables.sh`, editing `.pylintrc`) to avoid an inline comment: the scoped inline disable is preferable to losing the check everywhere. In pre-commit-vauxoo repos the generated `.pylintrc` is overwritten on every run — never edit it.
 
 4. **Code and Module Generation Standards:**
@@ -143,6 +150,7 @@ When developing or interacting with Odoo on this computer, always follow these r
 
 11. **Merge Requests and Task IDs:**
     - Antes de generar o sugerir la creación de un Merge Request, PREGUNTA siempre en qué tarea se está trabajando.
+    - Antes de crear o actualizar un MR/PR, pasar la compuerta de pre-commit de la regla 3 sobre el HEAD que se va a pushear. Sin eso no se crea el MR.
     - El título del Merge Request DEBE incluir el prefijo `task#<ID>` (por ejemplo, `task#31865`). Esto es vital porque existe un módulo que monitorea los títulos para mapear los MRs con tareas específicas en Odoo.
     - **Ligas a PR/MR:** en descripciones y comentarios de GitLab (git.jarsa.com), en el chatter de Odoo y en los mensajes al usuario, las referencias a PR de GitHub van SIEMPRE con URL completa (`https://github.com/OCA/account-payment/pull/976`). La forma corta `OCA/account-payment#976` GitLab la convierte en liga a git.jarsa.com.
     - **Idioma de PRs/MRs:** NUNCA escribas comentarios, descripciones ni títulos de Pull Requests / Merge Requests en español. Siempre en inglés, sin importar el repo (OCA, Jarsa, etc.). Esto aplica a comentarios de revisión, cuerpos de PR y mensajes de commit. (La regla de responder en español de México es solo para la conversación con el usuario, no para artefactos de Git/GitHub.)
