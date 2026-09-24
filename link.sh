@@ -21,3 +21,4 @@ for dir in "$CLAUDE" "$GEMINI"; do
     [ -L "$l" ] && [ ! -e "$l" ] && rm "$l" && echo "removed broken: $l"
   done
 done
+exit 0

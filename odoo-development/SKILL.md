@@ -184,3 +184,16 @@ When developing or interacting with Odoo on this computer, always follow these r
 16. **`oca_dependencies.txt` de los repos de cliente:**
     - Apunta SIEMPRE a los repos principales (`git@github.com:Jarsa/<repo>.git`, rama por defecto de la versión). Nunca a `Jarsa-dev` ni a una rama de trabajo, aunque el CI del cliente quede en rojo mientras se mezcla el PR al fork. El orden es: PR a OCA + PR al fork de Jarsa, se mezcla en el fork, y el CI del cliente se pone verde solo.
     - El CI de Jarsa (`jarsa_sync_deps`) cachea cada dependencia por nombre en un directorio persistente y solo hace `fetch` del remoto original: cambiar la URL de un repo ya cacheado falla con "couldn't find remote ref". Otra razón para no tocar las URLs.
+
+17. **PRs a OCA — política de IA y versión del manifest:**
+    - Aplica a todo commit/PR cuyo destino sea un repo de `github.com/OCA/*` (aunque el branch viva en `Jarsa-dev`). Política: https://github.com/OCA/.github/blob/master/AI_POLICY.md
+    - **NUNCA `Co-Authored-By:` de una IA** en el commit (OCA lo prohíbe: la autoría de una IA es legalmente indefinida). Esto ANULA la atribución por defecto de Claude Code. En su lugar, trailer `Assisted-by: <modelo>` (ej. `Assisted-by: Claude Fable 5.1`), una línea por modelo/agente, sin líneas en blanco entre ellas. Tampoco `Claude-Session:` ni ligas a sesiones de claude.ai.
+    - En la descripción del PR: declarar el uso de IA con la misma línea `Assisted-by: <modelo>`; NO poner `🤖 Generated with [Claude Code]` ni la liga de la sesión. El título no lleva mención de IA.
+    - Antes de pushear, verificar: `git log oca/<v>..HEAD --format=%B | grep -i -E "co-authored-by:.*(claude|anthropic|copilot|gpt)|claude-session"` debe salir VACÍO.
+    - **NO subir la versión en `__manifest__.py` a mano**: el bot de OCA la incrementa al mezclar (`/ocabot merge patch|minor|major`). Única excepción: commits `[MIG]` (versión `<v>.1.0.0`) o cuando se agrega un script de migración que requiere ese número de versión.
+    - El resto de la política también obliga: el humano debe poder explicar y defender cada línea; a los comentarios de revisión se responde con argumentos, no regenerando el código y resubiendo; no publicar reviews ni resúmenes generados por IA sin verificarlos; PRs chicos (referencia: <500 líneas) y máximo 5 PRs o 10 reviews en 24 h por persona.
+
+18. **SSH a servidores de Odoo.sh — SIEMPRE vía el bastión 192.99.15.215:**
+    - Odoo.sh tiene un firewall que solo acepta SSH desde la IP `192.99.15.215`. Toda conexión a producción, staging o dev de cualquier cliente en Odoo.sh se hace con `ssh -J ubuntu@192.99.15.215 <build>@<host>` (hosts `<proyecto>.odoo.com` y `<proyecto>-<rama>-<build>.dev.odoo.com`). `~/.ssh/config` trae `Host *.odoo.com` con `ProxyJump ubuntu@192.99.15.215`, así que `ssh <build>@<host>` directo funciona; un timeout en el puerto 22 significa que falta ese bloque, no que el build esté dormido.
+    - Archivos: `ssh <host> 'cat > /tmp/x.py' < local.py` (scp no funciona en Odoo.sh); scripts con `odoo-bin shell --no-http < /tmp/x.py`.
+    - Solo configuración en bases de cliente (rutas, tipos de operación, ubicaciones, automatizaciones, permisos). Nunca crear registros operativos del cliente (máximos/mínimos, productos, proveedores, inventarios).

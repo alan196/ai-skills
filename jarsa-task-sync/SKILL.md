@@ -38,8 +38,26 @@ silently):
    `post_task_message`.
 4. **On completion:** ask the user how many hours to log (propose an estimate
    from the session), then `log_timesheet(task_id, hours,
-   description=<summary of what was done>)` and `move_task_stage` to the
-   review/done stage the user confirms.
+   description=<summary of what was done>)`. Then PROPOSE (never do it
+   unasked) the hand-off to internal testing:
+   - Move the task to stage "Pruebas Internas" (`move_task_stage` with
+     `dry_run=true` first, apply after the user confirms). If the user
+     prefers another stage, use that one.
+   - Notify the project manager: `project.project.user_id` of the task's
+     project (read its `partner_id`). If the project has no manager or the
+     manager is the user, say so and skip the notification. Draft a chatter
+     message in Spanish, HTML, with: <b>Qué se hizo</b> (functional summary,
+     branch and MR link), <b>Dónde probar</b> (staging/build URL and database,
+     if any) and <b>Pasos para probar</b> (numbered `<ol>`: menu path, test
+     data, action and expected result for each case, including the edge cases
+     that were covered).
+   - The message follows rule 7: show the full text and its destination, wait
+     for explicit approval. Once approved, send it so ONLY the manager is
+     notified (task followers may include the client): `call_method(
+     model='project.task', method='message_post', ids=[<task_id>],
+     kwargs={'body': <html>, 'body_is_html': True, 'message_type': 'comment',
+     'subtype_xmlid': 'mail.mt_note', 'partner_ids': [<pm_partner_id>]})`.
+     Do NOT use `post_task_message(notify_followers=true)` for this.
 5. **On closing a task:** a task counts as closed only when BOTH: stage is
    "Hecho" (`move_task_stage`) AND `state = '1_done'` (set with
    `update_records(model='project.task', ids=[<id>], values={'state':
@@ -62,3 +80,12 @@ silently):
    propuesta.
    Nunca asumir que una autorización anterior cubre un mensaje nuevo, ni que
    "ya me lo habías aprobado" aplica a una versión modificada del texto.
+   **Cada petición de autorización lleva el texto completo en ese mismo
+   mensaje.** Prohibido pedir "¿la publico?" o dejar "falta tu OK a la nota"
+   en la lista de pendientes sin imprimir la nota íntegra justo ahí, aunque
+   ya se haya mostrado en un mensaje anterior o el usuario la haya visto:
+   el usuario no debe tener que buscarla ni pedirla aparte. Si hay varios
+   mensajes pendientes de autorizar, se imprimen todos, cada uno con su
+   destino (tarea, tipo nota/comentario, destinatario). Referir el texto con
+   frases como "el texto ya lo tienes" o "la nota que te propuse" cuenta
+   como NO haber pedido autorización.
