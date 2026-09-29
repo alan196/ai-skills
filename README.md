@@ -8,7 +8,7 @@ enlaza por symlink a las dos.
 ## Instalación (una línea)
 
 ```bash
-git clone https://github.com/alan196/ai-skills.git ~/.ai-skills && bash ~/.ai-skills/link.sh
+git clone https://git.jarsa.com/Jarsa/ai-skills.git ~/.ai-skills && bash ~/.ai-skills/link.sh
 ```
 
 Eso clona la fuente y enlaza por symlink todas las skills a Claude Code y
@@ -18,7 +18,7 @@ Antigravity. Para actualizar después:
 git -C ~/.ai-skills pull && bash ~/.ai-skills/link.sh
 ```
 
-Si vas a contribuir, clona por SSH: `git clone git@github.com:alan196/ai-skills.git ~/.ai-skills`
+Si vas a contribuir, clona por SSH: `git clone git@git.jarsa.com:Jarsa/ai-skills.git ~/.ai-skills`
 
 ## Crear una skill nueva
 
