@@ -89,3 +89,13 @@ silently):
    destino (tarea, tipo nota/comentario, destinatario). Referir el texto con
    frases como "el texto ya lo tienes" o "la nota que te propuse" cuenta
    como NO haber pedido autorización.
+8. **"Notificar al cliente por correo" = mensaje en el chatter de la tarea.**
+   En Jarsa casi nunca se mandan correos directos (Gmail). Cuando el usuario
+   pida "notificar", "avisar por correo" o "confirmar al cliente" desde una
+   tarea, se redacta un comentario para el chatter y Odoo lo envía por correo
+   al cliente. Solo se usa Gmail cuando el usuario lo pida explícitamente
+   ("mándalo por correo directo / por Gmail"). Envío, tras la autorización de
+   la regla 7: `call_method(model='project.task', method='message_post',
+   ids=[<task_id>], kwargs={'body': <html>, 'body_is_html': True,
+   'message_type': 'comment', 'subtype_xmlid': 'mail.mt_comment',
+   'partner_ids': [<partner_id del cliente>]})`.
