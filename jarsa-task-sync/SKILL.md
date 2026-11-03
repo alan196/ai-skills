@@ -35,7 +35,8 @@ silently):
    reason=...)`.
 3. **On MR creation:** the MR title MUST include `task#<odoo_task_id>` (repo
    rule); post the MR URL to the task chatter as an internal note with
-   `post_task_message`.
+   `post_task_message` (nota interna: se publica directo, sin autorización,
+   ver regla 7).
 4. **On completion:** ask the user how many hours to log (propose an estimate
    from the session), then `log_timesheet(task_id, hours,
    description=<summary of what was done>)`. Then PROPOSE (never do it
@@ -66,29 +67,34 @@ silently):
 6. Never notify followers (`notify_followers` stays false) unless the user
    asks. Use `dry_run=true` first for stage moves and bulk changes, and apply
    only after the user confirms.
-7. **NUNCA enviar un mensaje sin autorización previa — regla inviolable.**
-   Aplica a CUALQUIER mensaje que salga hacia otra persona: chatter de una
-   tarea (`post_task_message`, sea `comment` o `note`), correo, comentario en
-   un PR/MR, mensaje en Slack/WhatsApp, respuesta a un cliente. También
-   aplica cuando el usuario dice "manda el mensaje", "notifícale", "avísale"
-   o "cámbialo y envíalo": esa instrucción autoriza a REDACTAR, nunca a
-   enviar.
-   El flujo es siempre: (1) escribir la propuesta completa del mensaje en la
-   respuesta al usuario, tal cual se va a enviar; (2) esperar a que el
-   usuario la revise y la autorice explícitamente; (3) solo entonces,
-   enviarla. Si el usuario pide cambios, se repite el ciclo con la nueva
-   propuesta.
-   Nunca asumir que una autorización anterior cubre un mensaje nuevo, ni que
-   "ya me lo habías aprobado" aplica a una versión modificada del texto.
+7. **Autorización de mensajes — solo lo que llega al cliente o a terceros.**
+   - **Notas internas NO se autorizan: se escriben directo.** Una nota
+     interna del chatter (`post_task_message` con `message_type='note'`,
+     `notify_followers=false`, subtipo `mail.mt_note`, sin `partner_ids`)
+     no sale a nadie: se publica sin pedir permiso y sin mostrarla antes
+     (inicio de trabajo, enlace del MR, avances, hallazgos técnicos, dónde
+     probar). Lo mismo aplica a descripciones de tareas, timesheets y
+     etapas que no notifican. (Alan, 3-nov-2026: "las notas internas que
+     no se envían al cliente no se deben de autorizar, escríbelas dentro
+     de las tareas sin enviar; solo lo que se envía a cliente debe
+     autorizarse".)
+   - **Lo que SÍ requiere autorización previa — regla inviolable:** cualquier
+     mensaje que llegue a otra persona: comentario del chatter
+     (`message_type='comment'`), `notify_followers=true`, `partner_ids`
+     (incluido el PM, porque recibe notificación), correo, comentario en un
+     PR/MR público, Slack/WhatsApp, respuesta a un cliente. "Manda el
+     mensaje", "notifícale" o "avísale" autorizan a REDACTAR, nunca a enviar.
+   El flujo para los que requieren autorización: (1) escribir la propuesta
+   completa del mensaje en la respuesta al usuario, tal cual se va a enviar,
+   con su destino (tarea, tipo, destinatario); (2) esperar a que el usuario
+   la revise y la autorice explícitamente; (3) solo entonces, enviarla. Si
+   pide cambios, se repite el ciclo. Nunca asumir que una autorización
+   anterior cubre un mensaje nuevo o una versión modificada.
    **Cada petición de autorización lleva el texto completo en ese mismo
-   mensaje.** Prohibido pedir "¿la publico?" o dejar "falta tu OK a la nota"
-   en la lista de pendientes sin imprimir la nota íntegra justo ahí, aunque
-   ya se haya mostrado en un mensaje anterior o el usuario la haya visto:
-   el usuario no debe tener que buscarla ni pedirla aparte. Si hay varios
-   mensajes pendientes de autorizar, se imprimen todos, cada uno con su
-   destino (tarea, tipo nota/comentario, destinatario). Referir el texto con
-   frases como "el texto ya lo tienes" o "la nota que te propuse" cuenta
-   como NO haber pedido autorización.
+   mensaje.** Prohibido pedir "¿la publico?" o dejar "falta tu OK" en los
+   pendientes sin imprimir el texto íntegro justo ahí, aunque ya se haya
+   mostrado antes: referir el texto con "el texto ya lo tienes" cuenta como
+   NO haber pedido autorización.
 8. **"Notificar al cliente por correo" = mensaje en el chatter de la tarea.**
    En Jarsa casi nunca se mandan correos directos (Gmail). Cuando el usuario
    pida "notificar", "avisar por correo" o "confirmar al cliente" desde una
